@@ -1,0 +1,6 @@
+{
+    "ignore": ["*.log", "node_modules/**/*"],
+    "watch": ["src/**/*.ts"],
+    "exec": "ts-node ./src/app.ts",
+    "ext": "ts"
+  }
