@@ -18,7 +18,7 @@ class Bot {
 
   async init() {
     this.commands = [
-      new StartCommand(this.bot,this.configService),
+      new StartCommand(this.bot),
       new DlCommand(this.bot,this.configService),
     ];
     for (const command of this.commands) {

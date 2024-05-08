@@ -4,8 +4,8 @@ import { IConfigService } from "../config/config.interface";
 import { Command } from "./command.class";
 
 export class StartCommand extends Command {
-  constructor(bot: Telegraf<IBotContext>,configService: IConfigService) {
-    super(bot,configService);
+  constructor(bot: Telegraf<IBotContext>) {
+    super(bot);
   }
 
   handle(): void {

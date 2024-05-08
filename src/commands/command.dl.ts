@@ -9,8 +9,8 @@ import fs from "fs"
 import path from "path"
 
 export class DlCommand extends Command {
-  constructor(bot: Telegraf<IBotContext>,configService: IConfigService) {
-    super(bot,configService);
+  constructor(bot: Telegraf<IBotContext>,private readonly configService: IConfigService) {
+    super(bot);
   }
 
   handle(): void {
