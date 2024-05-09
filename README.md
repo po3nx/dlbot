@@ -9,9 +9,11 @@ Before running the bot, you need to set up the necessary environment variables. 
 
 **Environment Variables :**
 
-**TOKEN** - This is your Telegram Bot Token, which you receive from the BotFather when you create your bot on Telegram.
-**OPENAI_API_KEY** - This is your OpenAI API Key
-**YT_DLP_PATH** - This is the file path to your yt-dlp executable, which is used for downloading media. Ensure that yt-dlp is properly installed on your system.
+- **TOKEN** - This is your Telegram Bot Token, which you receive from the BotFather when you create your bot on Telegram.
+
+- **OPENAI_API_KEY** - This is your OpenAI API Key
+
+- **YT_DLP_PATH** - This is the file path to your yt-dlp executable, which is used for downloading media. Ensure that yt-dlp is properly installed on your system.
 
 ```
 TOKEN=your_telegram_bot_token_here
