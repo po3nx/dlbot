@@ -15,9 +15,9 @@ export class ChatCommand extends Command {
     const ai = new OpenaiService(this.configService)
     this.bot.on(message("text"),async (ctx) => {
         let text = ctx.message.text
-        if (/(txt2img|(make|create|buat|cari).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text)) {
-          let rep:any =await ai.generateImage(text)
-          ctx.replyWithPhoto( Input.fromURLStream(rep))
+        if (/(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text)) {
+          let rep:any = await ai.generateImage(text)
+          ctx.replyWithPhoto(Input.fromURLStream(rep))
         }else{
           let rep:any = await ai.chatCompletion(text)
           ctx.reply(rep)
