@@ -1,6 +1,5 @@
 import { Markup, Telegraf } from "telegraf";
 import { IBotContext } from "../context/context.interface";
-import { IConfigService } from "../config/config.interface";
 import { Command } from "./command.class";
 
 export class StartCommand extends Command {
