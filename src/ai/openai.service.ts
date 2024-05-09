@@ -1,7 +1,7 @@
 import { IConfigService } from "../config/config.interface";
 import { IOpenaiService } from "./openai.interface";
 import { Configuration,OpenAIApi ,ChatCompletionRequestMessage} from "openai";
-
+import axios from "axios"
 export class OpenaiService implements IOpenaiService {
     private apiKey: string;
     private configuration:Configuration
@@ -21,7 +21,7 @@ export class OpenaiService implements IOpenaiService {
         const respo = await openai.createChatCompletion({
             model: 'gpt-4-turbo',
             temperature: 0.6,
-            max_tokens: 1000,
+            max_tokens: 2000,
             //top_p: 1.0,
             //frequency_penalty: 0.1,
             //presence_penalty: 0.0,
@@ -42,16 +42,8 @@ export class OpenaiService implements IOpenaiService {
             {
                 "role": "user",
                 "content": [
-                    {
-                        "type": "text",
-                        "text": text
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": "data:image/png;base64,"+imageBase64
-                        }
-                    }
+                    {"type": "text", "text": text},
+                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,"+imageBase64}}
                 ] as unknown as string
               }]
         const openai = new OpenAIApi(this.configuration);
@@ -70,5 +62,15 @@ export class OpenaiService implements IOpenaiService {
         }
         console.error("Response structure is not as expected or missing data.");
         return null; 
+    }
+    async  generateImage(text: string): Promise<string | null> {
+        const openai = new OpenAIApi(this.configuration);
+        const response:any = await openai.createImage({
+            prompt: text.toString().trim(),
+            n: 1,
+            size: "1024x1024",
+        });
+        const image_url = response.data.data[0].url;
+        return image_url || null
     }
 }

@@ -1,4 +1,4 @@
-import { Telegraf } from "telegraf";
+import { Telegraf,Input } from "telegraf";
 import { IBotContext } from "../context/context.interface";
 import { IConfigService } from "../config/config.interface";
 import { Command } from "./command.class";
@@ -15,9 +15,13 @@ export class ChatCommand extends Command {
     const ai = new OpenaiService(this.configService)
     this.bot.on(message("text"),async (ctx) => {
         let text = ctx.message.text
-        console.log(text)
-        const rep:any = await ai.chatCompletion(text)
-        ctx.reply(rep)
+        if (/(txt2img|(make|create|buat|cari).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text)) {
+          let rep:any =await ai.generateImage(text)
+          ctx.replyWithPhoto( Input.fromURLStream(rep))
+        }else{
+          let rep:any = await ai.chatCompletion(text)
+          ctx.reply(rep)
+        }
     });
     this.bot.on(message("photo"),async (ctx) => {
         let text:any = ctx.message.caption || "Jelaskan Gambar berikut"
