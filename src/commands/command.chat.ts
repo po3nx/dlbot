@@ -15,7 +15,6 @@ export class ChatCommand extends Command {
   }
   handle(): void {
     const ai = new OpenaiService(this.configService)
-    this.botchats = this.botchats ? this.botchats : {}
     this.bot.on(message("text"),async (ctx) => {
       const d = new Date
       const date = d.toLocaleDateString('id', {
