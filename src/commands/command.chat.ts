@@ -27,7 +27,7 @@ export class ChatCommand extends Command {
       let text = ctx.message.text
       if(botchat){
         botchat.messages.push({'role':"user","content":text});
-        if (botchat.messages.length > 5) {
+        if (botchat.messages.length > 9) {
             botchat.messages.shift();
         }
       }else{
@@ -50,7 +50,7 @@ export class ChatCommand extends Command {
         let rep:any = await ai.chatCompletion(combinedMessages)
         if (typeof(rep)==='string'){
           botchat.messages.push({'role':"assistant","content":rep});
-          if (botchat.messages.length > 5) {
+          if (botchat.messages.length > 9) {
               botchat.messages.shift();
           }
         }
