@@ -16,6 +16,17 @@ export class ChatCommand extends Command {
   handle(): void {
     const ai = new OpenaiService(this.configService)
     this.bot.on(message("text"),async (ctx) => {
+      let replyText:string = ""
+      if (ctx.message && ctx.message.reply_to_message) {
+        if ('text' in ctx.message.reply_to_message) {
+          replyText = ctx.message.reply_to_message.text;
+        } else if ('caption' in ctx.message.reply_to_message) {
+          replyText = ctx.message.reply_to_message.caption as string;
+        } else {
+          console.log("Reply was not a text message.");
+        }
+      }
+      let text = "'"+replyText + "'\n"+ctx.message.text
       const d = new Date
       const date = d.toLocaleDateString('id', {
         day: 'numeric',
@@ -23,7 +34,6 @@ export class ChatCommand extends Command {
         year: 'numeric'
       })
       let botchat = this.botchats[ctx.chat.id];
-      let text = ctx.message.text
       if(botchat){
         botchat.messages.push({'role':"user","content":text});
         if (botchat.messages.length > 9) {
