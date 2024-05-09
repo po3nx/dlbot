@@ -1,27 +1,61 @@
-import { Telegraf,Input } from "telegraf";
+import { Telegraf,Input, Context } from "telegraf";
 import { IBotContext } from "../context/context.interface";
 import { IConfigService } from "../config/config.interface";
 import { Command } from "./command.class";
 import { message } from 'telegraf/filters';
 import { OpenaiService } from "../ai/openai.service";
 import https from "https";
+import { ChatCompletionMessageParam, ChatCompletionMessage } from "openai/resources";
 
 export class ChatCommand extends Command {
-  constructor(bot: Telegraf<IBotContext>,private readonly configService: IConfigService) {
+  private botchats: { [key: string]: BotChat };
+  constructor(bot: Telegraf<IBotContext>,private readonly configService: IConfigService ) {
     super(bot);
+    this.botchats = {};
   }
-
   handle(): void {
     const ai = new OpenaiService(this.configService)
+    this.botchats = this.botchats ? this.botchats : {}
     this.bot.on(message("text"),async (ctx) => {
-        let text = ctx.message.text
-        if (/(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text)) {
-          let rep:any = await ai.generateImage(text)
-          ctx.replyWithPhoto(Input.fromURLStream(rep))
-        }else{
-          let rep:any = await ai.chatCompletion(text)
-          ctx.reply(rep)
+      const d = new Date
+      const date = d.toLocaleDateString('id', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })
+      let botchat = this.botchats[ctx.chat.id];
+      let text = ctx.message.text
+      if(botchat){
+        botchat.messages.push({'role':"user","content":text});
+        if (botchat.messages.length > 5) {
+            botchat.messages.shift();
         }
+      }else{
+        botchat = {
+          id: ctx.chat.id.toString(),
+          user: ctx.message.from.username as string,
+          date: date,
+          messages: [{ 'role': "user", 'content': text }]
+        };
+        this.botchats[ctx.chat.id] = botchat;
+      }
+      if (/(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text)) {
+        let rep:any = await ai.generateImage(text)
+        ctx.replyWithPhoto(Input.fromURLStream(rep))
+      }else{
+        const initialMessages:ChatCompletionMessageParam[] = [{"role":"system","content":"Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."}
+        ]
+        const combinedMessages = [...initialMessages, ...botchat.messages];
+        console.log(combinedMessages)
+        let rep:any = await ai.chatCompletion(combinedMessages)
+        if (typeof(rep)==='string'){
+          botchat.messages.push({'role':"assistant","content":rep});
+          if (botchat.messages.length > 5) {
+              botchat.messages.shift();
+          }
+        }
+        ctx.reply(rep)
+      }
     });
     this.bot.on(message("photo"),async (ctx) => {
         let text:any = ctx.message.caption || "Jelaskan Gambar berikut"
@@ -42,4 +76,10 @@ export class ChatCommand extends Command {
           });
     });
   }
+}
+export interface BotChat{
+  id:string,
+  user:string,
+  date:string,
+  messages:ChatCompletionMessageParam[]
 }

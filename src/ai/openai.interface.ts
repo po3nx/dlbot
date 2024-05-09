@@ -1,5 +1,6 @@
+import { ChatCompletionMessageParam, ChatCompletionMessage } from "openai/resources";
 export interface IOpenaiService {
-    chatCompletion(text: string): Promise<string | null>;
+    chatCompletion(messg: ChatCompletionMessageParam[]): Promise<string | null>;
     visionAI(imageBase64:string,text: string):  Promise<string | null>;
     generateImage(text: string): Promise<string | null>;
   }

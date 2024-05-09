@@ -7,12 +7,8 @@ export class OpenaiService implements IOpenaiService {
     
     constructor(private readonly configService: IConfigService) {
     }
-    async chatCompletion(text: string): Promise<string | null> {
+    async chatCompletion(messg: ChatCompletionMessageParam[]): Promise<string | null> {
         const openai = new OpenAI
-        const messg:ChatCompletionMessageParam[] = [{"role":"system","content":"Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."},
-            {"role":"user","content":text}
-        ]
-              
         const respo = await openai.chat.completions.create({
             model: 'gpt-4-turbo',
             temperature: 0.6,
