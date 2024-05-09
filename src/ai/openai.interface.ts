@@ -5,7 +5,7 @@ export interface IOpenaiService {
   }
 export interface ChatMessage {
     role: 'user' | 'system' | 'assistant';  // Add more roles as necessary
-    content: ContentItem[] ;
+    content: ContentItem ;
 }
 
 type ContentItem = string | TextContent | ImageContent;

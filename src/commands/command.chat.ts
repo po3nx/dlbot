@@ -2,9 +2,9 @@ import { Telegraf,Input } from "telegraf";
 import { IBotContext } from "../context/context.interface";
 import { IConfigService } from "../config/config.interface";
 import { Command } from "./command.class";
-import { message } from 'telegraf/filters'
-import { OpenaiService } from "../ai/openai.service"
-const https = require("https");
+import { message } from 'telegraf/filters';
+import { OpenaiService } from "../ai/openai.service";
+import https from "https";
 
 export class ChatCommand extends Command {
   constructor(bot: Telegraf<IBotContext>,private readonly configService: IConfigService) {
