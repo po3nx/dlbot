@@ -46,7 +46,7 @@ export class ChatCommand extends Command {
         const initialMessages:ChatCompletionMessageParam[] = [{"role":"system","content":"Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."}
         ]
         const combinedMessages = [...initialMessages, ...botchat.messages];
-        console.log(combinedMessages)
+        //console.log(combinedMessages)
         let rep:any = await ai.chatCompletion(combinedMessages)
         if (typeof(rep)==='string'){
           botchat.messages.push({'role':"assistant","content":rep});
