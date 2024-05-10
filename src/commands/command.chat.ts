@@ -26,7 +26,7 @@ export class ChatCommand extends Command {
           console.log("Reply was not a text message.");
         }
       }
-      let text = "'"+replyText + "'\n"+ctx.message.text
+      const text = `'${replyText}'\n${ctx.message.text}`;
       const d = new Date
       const date = d.toLocaleDateString('id', {
         day: 'numeric',
@@ -52,7 +52,11 @@ export class ChatCommand extends Command {
         let rep:any = await ai.generateImage(text)
         ctx.replyWithPhoto(Input.fromURLStream(rep))
       }else{
-        const initialMessages:ChatCompletionMessageParam[] = [{"role":"system","content":"Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."}
+        const initialMessages:ChatCompletionMessageParam[] = [
+          {
+            "role":"system",
+            "content":"Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."
+          }
         ]
         const combinedMessages = [...initialMessages, ...botchat.messages];
         //console.log(combinedMessages)
