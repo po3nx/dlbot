@@ -1,98 +1,130 @@
-import { Telegraf,Input, Context } from "telegraf";
+import { Telegraf, Context, Middleware } from "telegraf";
 import { IBotContext } from "../context/context.interface";
 import { IConfigService } from "../config/config.interface";
 import { Command } from "./command.class";
-import { message } from 'telegraf/filters';
 import { OpenaiService } from "../ai/openai.service";
 import https from "https";
-import { ChatCompletionMessageParam, ChatCompletionMessage } from "openai/resources";
+import { ChatCompletionMessageParam } from "openai/resources";
 
 export class ChatCommand extends Command {
-  private botchats: { [key: string]: BotChat };
-  constructor(bot: Telegraf<IBotContext>,private readonly configService: IConfigService ) {
-    super(bot);
-    this.botchats = {};
-  }
-  handle(): void {
-    const ai = new OpenaiService(this.configService)
-    this.bot.on(message("text"),async (ctx) => {
-      let replyText:string = ""
-      if (ctx.message && ctx.message.reply_to_message) {
-        if ('text' in ctx.message.reply_to_message) {
-          replyText = ctx.message.reply_to_message.text;
-        } else if ('caption' in ctx.message.reply_to_message) {
-          replyText = ctx.message.reply_to_message.caption as string;
+    private botChats: { [key: string]: BotChat };
+
+    constructor(bot: Telegraf<IBotContext>, private readonly configService: IConfigService) {
+        super(bot);
+        this.botChats = {};
+    }
+
+    handle(): void {
+        const aiService = new OpenaiService(this.configService);
+
+        this.bot.on('text', (ctx: IBotContext) => this.handleText(ctx, aiService));
+        this.bot.on('photo', (ctx: IBotContext) => this.handlePhoto(ctx, aiService));
+    }
+
+    private async handleText(ctx: IBotContext, aiService: OpenaiService): Promise<void> {
+        const replyText = this.extractReplyText(ctx);
+        const formattedDate = this.formatCurrentDate();
+        const chatId = ctx.chat!.id.toString();
+        const username = ctx.from!.username as string;
+        const text = `'${replyText}'\n${ctx.message!.text}`;
+
+        let botChat = this.botChats[chatId] || this.initializeBotChat(chatId, username, formattedDate);
+        botChat.messages.push({ 'role': "user", 'content': text });
+        this.trimMessages(botChat);
+
+        if (this.shouldGenerateImage(text)) {
+            const imageUrl = await aiService.generateImage(text);
+            if (imageUrl) {
+                ctx.replyWithPhoto(imageUrl);
+            }
         } else {
-          console.log("Reply was not a text message.");
+            const response = await aiService.chatCompletion(this.prepareMessages(botChat));
+            if (response) {
+                botChat.messages.push({ 'role': "assistant", 'content': response });
+                this.trimMessages(botChat);
+                ctx.reply(response);
+            }
         }
-      }
-      const text = `'${replyText}'\n${ctx.message.text}`;
-      const d = new Date
-      const date = d.toLocaleDateString('id', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-      let botchat = this.botchats[ctx.chat.id];
-      if(botchat){
-        botchat.messages.push({'role':"user","content":text});
-        if (botchat.messages.length > 9) {
-            botchat.messages.shift();
+    }
+
+    private async handlePhoto(ctx: IBotContext, aiService: OpenaiService): Promise<void> {
+        const text = ctx.message!.caption || "Jelaskan Gambar berikut";
+        const imageId = ctx.message!.photo!.pop()?.file_id;
+
+        if (imageId) {
+            const imageUrl = await ctx.telegram.getFileLink(imageId);
+            this.processImageResponse(imageUrl, text, aiService, ctx);
         }
-      }else{
-        botchat = {
-          id: ctx.chat.id.toString(),
-          user: ctx.message.from.username as string,
-          date: date,
-          messages: [{ 'role': "user", 'content': text }]
+    }
+
+    private extractReplyText(ctx: IBotContext): string {
+        if (ctx.message?.reply_to_message) {
+            if ('text' in ctx.message.reply_to_message) {
+                return ctx.message.reply_to_message.text!;
+            } else if ('caption' in ctx.message.reply_to_message) {
+                return ctx.message.reply_to_message.caption!;
+            }
+        }
+        return "";
+    }
+
+    private formatCurrentDate(): string {
+        return new Date().toLocaleDateString('id', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+    }
+
+    private initializeBotChat(chatId: string, username: string, date: string): BotChat {
+        const botChat: BotChat = {
+            id: chatId,
+            user: username,
+            date: date,
+            messages: []
         };
-        this.botchats[ctx.chat.id] = botchat;
-      }
-      if (/(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text)) {
-        let rep:any = await ai.generateImage(text)
-        ctx.replyWithPhoto(Input.fromURLStream(rep))
-      }else{
-        const initialMessages:ChatCompletionMessageParam[] = [
-          {
-            "role":"system",
-            "content":"Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."
-          }
-        ]
-        const combinedMessages = [...initialMessages, ...botchat.messages];
-        //console.log(combinedMessages)
-        let rep:any = await ai.chatCompletion(combinedMessages)
-        if (typeof(rep)==='string'){
-          botchat.messages.push({'role':"assistant","content":rep});
-          if (botchat.messages.length > 9) {
-              botchat.messages.shift();
-          }
+        this.botChats[chatId] = botChat;
+        return botChat;
+    }
+
+    private trimMessages(botChat: BotChat): void {
+        if (botChat.messages.length > 9) {
+            botChat.messages.shift();
         }
-        ctx.reply(rep)
-      }
-    });
-    this.bot.on(message("photo"),async (ctx) => {
-        let text:any = ctx.message.caption || "Jelaskan Gambar berikut"
-        let imageId:any = ctx.message.photo.pop()?.file_id
-        const imageUrl = await ctx.telegram.getFileLink(imageId);
-        https.get(imageUrl, async (response:any) => {
-            const chunks: any[] = [];
-            response.on('data', async (chunk:any) => {
-              chunks.push(chunk);
+    }
+
+    private shouldGenerateImage(text: string): boolean {
+        return /(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text);
+    }
+
+    private prepareMessages(botChat: BotChat): ChatCompletionMessageParam[] {
+        const initialMessages: ChatCompletionMessageParam[] = [{
+            "role": "system",
+            "content": "Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."
+        }];
+        return [...initialMessages, ...botChat.messages];
+    }
+
+    private async processImageResponse(imageUrl: URL, text: string, aiService: OpenaiService, ctx: IBotContext): Promise<void> {
+        https.get(imageUrl, (response) => {
+            const chunks: Buffer[] = [];
+            response.on('data', (chunk: Buffer) => {
+                chunks.push(chunk);
             }).on('end', async () => {
-              const imageBuffer = Buffer.concat(chunks);
-              const base64Image = imageBuffer.toString('base64');
-              const rep:any = await ai.visionAI(base64Image,text)
-              ctx.reply(rep)
+                const imageBuffer = Buffer.concat(chunks);
+                const base64Image = imageBuffer.toString('base64');
+                const reply = await aiService.visionAI(base64Image, text);
+                if (reply) {
+                    ctx.reply(reply);
+                }
             });
-          }).on('error', (error:any) => {
+        }).on('error', (error) => {
             console.error("Failed to download or convert image:", error);
-          });
-    });
-  }
+        });
+    }
 }
-export interface BotChat{
-  id:string,
-  user:string,
-  date:string,
-  messages:ChatCompletionMessageParam[]
+
+export interface BotChat {
+    id: string;
+    user: string;
+    date: string;
+    messages: ChatCompletionMessageParam[];
 }
