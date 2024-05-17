@@ -17,11 +17,11 @@ export class ChatCommand extends Command {
     handle(): void {
         const aiService = new OpenaiService(this.configService);
 
-        this.bot.on('text', (ctx: IBotContext) => this.handleText(ctx, aiService));
-        this.bot.on('photo', (ctx: IBotContext) => this.handlePhoto(ctx, aiService));
+        this.bot.on('text', (ctx) => this.handleText(ctx, aiService));
+        this.bot.on('photo', (ctx) => this.handlePhoto(ctx, aiService));
     }
 
-    private async handleText(ctx: IBotContext, aiService: OpenaiService): Promise<void> {
+    private async handleText(ctx:any, aiService: OpenaiService): Promise<void> {
         const replyText = this.extractReplyText(ctx);
         const formattedDate = this.formatCurrentDate();
         const chatId = ctx.chat!.id.toString();
@@ -47,7 +47,7 @@ export class ChatCommand extends Command {
         }
     }
 
-    private async handlePhoto(ctx: IBotContext, aiService: OpenaiService): Promise<void> {
+    private async handlePhoto(ctx:any, aiService: OpenaiService): Promise<void> {
         const text = ctx.message!.caption || "Jelaskan Gambar berikut";
         const imageId = ctx.message!.photo!.pop()?.file_id;
 
@@ -57,7 +57,7 @@ export class ChatCommand extends Command {
         }
     }
 
-    private extractReplyText(ctx: IBotContext): string {
+    private extractReplyText(ctx:any): string {
         if (ctx.message?.reply_to_message) {
             if ('text' in ctx.message.reply_to_message) {
                 return ctx.message.reply_to_message.text!;
