@@ -34,7 +34,9 @@ export class ChatCommand extends Command {
         if (this.shouldGenerateImage(text)) {
             const imageUrl = await aiService.generateImage(text);
             if (imageUrl) {
-                ctx.replyWithPhoto(imageUrl);
+              botChat.messages.push({ role: "assistant", content: "Gambar telah dibuat, sesuai deskripsi anda" });
+              this.trimMessages(botChat);
+              ctx.replyWithPhoto(imageUrl);
             }
         } else {
             const response = await aiService.chatCompletion(this.prepareMessages(botChat));
