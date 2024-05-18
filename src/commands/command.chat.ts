@@ -77,13 +77,13 @@ export class ChatCommand extends Command {
     return new Date().toLocaleDateString('id', {
       day: 'numeric', month: 'long', year: 'numeric'
     });
-}
+  }
 
   private initializeBotChat(chatId: string, username: string, date: string): BotChat {
     const botChat: BotChat = { id: chatId, user: username, date, messages: [] };
     this.botChats[chatId] = botChat;
     return botChat;
-}
+  }
 
   private trimMessages(botChat: BotChat): void {
     if (botChat.messages.length > 9) {
