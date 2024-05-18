@@ -33,11 +33,13 @@ export class ChatCommand extends Command {
     this.trimMessages(botChat);
 
     if (this.shouldGenerateImage(text)) {
+      const loadingMsg = await ctx.reply('⚠️ Gambar sedang diproses, Mohon ditunggu 🌐');
       const imageUrl = await aiService.generateImage(text);
       if (imageUrl) {
         botChat.messages.push({ role: "assistant", content: "Gambar telah dibuat, sesuai deskripsi anda" });
         this.trimMessages(botChat);
         ctx.replyWithPhoto(imageUrl);
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
       }
     } else {
       const response = await aiService.chatCompletion(this.prepareMessages(botChat));
@@ -59,12 +61,14 @@ export class ChatCommand extends Command {
     botChat.messages.push({ role: "user", content: text });
 
     if (imageId) {
+      const loadingMsg = await ctx.reply('⚠️ Gambar sedang diproses, Mohon ditunggu 🌐');
       const imageUrl = await ctx.telegram.getFileLink(imageId);
       const response = await this.processImageResponse(imageUrl, text, aiService);
       if (response) {
         botChat.messages.push({ role: "assistant", content: response });
         this.trimMessages(botChat);
         ctx.reply(response);
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
       }
     }
   }
