@@ -119,8 +119,8 @@ export class ChatCommand extends Command {
 }
 
 interface BotChat {
-    id: string;
-    user: string;
-    date: string;
-    messages: ChatCompletionMessageParam[];
+  id: string;
+  user: string;
+  date: string;
+  messages: ChatCompletionMessageParam[];
 }
