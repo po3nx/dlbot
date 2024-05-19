@@ -39,74 +39,69 @@ export class GeminiService implements IGeminiService {
 
         this.axios = axios.create(axiosOptions);
     }
-    private extractLinks(content: string, pattern: RegExp, excludeDomain: string): string[] {
-        const matches = content.match(pattern) || [];
-        return matches.filter(link => !link.includes(excludeDomain));
-    }
-    
-    private addLinksToContent(content: string, links: string[], label: string): string {
-        if (links.length > 0) {
-            content += `\n${label}:\n`;
-            links.forEach(link => {
-                content += `${link}\n`;
-            });
-        }
-        return content;
-    }
-    private parseResponse(response: string): BardAnswer | { error:boolean, errormsg: string } {
-        const lines = response.split("\n");
+    private parseResponse(response: string): BardAnswer | { error:boolean, content: string } {
+        const answ = response.split("\n");
         const googleMapLinks: string[] = [];
-        
-        if (lines.length <= 3) {
-            return { error:true, errormsg: "Error parsing response" };
+    
+        if (answ.length > 3) {
+            let resp_dict: any;
+            if (answ[3].includes('google_map_tool') || answ[3].includes('hotels_tool')) {
+                resp_dict = JSON.parse(answ[11])[0][2];
+                this.extractMapLink(JSON.parse(resp_dict), googleMapLinks);
+            } else {
+                resp_dict = JSON.parse(answ[3])[0][2];
+            }
+    
+            if (resp_dict === null) {
+                return { error:true, content: `Response Error: ${response}.` };
+            }
+            const parsed_answer = JSON.parse(resp_dict);
+            this.c = parsed_answer[1][0];
+            this.r = parsed_answer[1][1];
+            this.rc = parsed_answer[4][0][0];
+    
+            const bard_answer: BardAnswer = {
+                conversation_id: parsed_answer[1][0],
+                response_id: parsed_answer[1][1],
+                choice_id: parsed_answer[4][0][0],
+                factualityQueries: parsed_answer[3],
+                textQuery: parsed_answer[2][0] ?? "",
+                choices: parsed_answer[4].map((i: any) => ({
+                    id: i[0],
+                    content: i[1]
+                })),
+                link: []
+            };
+    
+            const pattern = /\[(https?:\/\/[^\]]+)\]/g;
+            const matches = bard_answer.choices[0].content[0].match(pattern) || [];
+            const filteredLinks = matches.filter((link: string) => !link.includes('googleusercontent.com'));
+    
+            bard_answer.link.push(...googleMapLinks);
+    
+            if (googleMapLinks.length > 0) {
+                bard_answer.choices[0].content += "\nLocation Link:\n";
+                bard_answer.maplink = true;
+                googleMapLinks.forEach(link => {
+                    bard_answer.choices[0].content += `${link}\n`;
+                });
+            }
+    
+            bard_answer.link.push(...filteredLinks);
+    
+            if (filteredLinks.length > 0) {
+                bard_answer.choices[0].content += "\nRelated Link:\n";
+                bard_answer.otherlink = true;
+                filteredLinks.forEach(link => {
+                    bard_answer.choices[0].content += `${link}\n`;
+                    bard_answer.link.push(`${link}\n`);
+                });
+            }
+    
+            return bard_answer;
+        } else {
+            return {error :true , content:"Error on parsing response" };
         }
-    
-        const isSpecialTool = (line: string) => line.includes('google_map_tool') || line.includes('hotels_tool');
-        const respDictLine = isSpecialTool(lines[3]) ? lines[11] : lines[3];
-        const respDict = JSON.parse(respDictLine)?.[0]?.[2];
-    
-        if (!respDict) {
-            return { error:true, errormsg: `Response Error: ${response}.` };
-        }
-    
-        const parsedAnswer = JSON.parse(respDict);
-        const [conversation_id, response_id] = parsedAnswer[1];
-        const choice_id = parsedAnswer[4][0][0];
-    
-        const bardAnswer: BardAnswer = {
-            conversation_id,
-            response_id,
-            choice_id,
-            factualityQueries: parsedAnswer[3],
-            textQuery: parsedAnswer[2][0] ?? "",
-            choices: parsedAnswer[4].map((i: any) => ({
-                id: i[0],
-                content: i[1]
-            })),
-            link: []
-        };
-        this.c = conversation_id
-        this.r = response_id
-        this.rc = choice_id
-
-        this.extractMapLink(JSON.parse(respDict), googleMapLinks);
-        bardAnswer.link.push(...googleMapLinks);
-    
-        const urlPattern = /\[(https?:\/\/[^\]]+)\]/g;
-        const filteredLinks = this.extractLinks(bardAnswer.choices[0].content, urlPattern, 'googleusercontent.com');
-        bardAnswer.link.push(...filteredLinks);
-    
-        bardAnswer.choices[0].content = this.addLinksToContent(bardAnswer.choices[0].content, googleMapLinks, 'Location Link');
-        bardAnswer.choices[0].content = this.addLinksToContent(bardAnswer.choices[0].content, filteredLinks, 'Related Link');
-    
-        if (googleMapLinks.length > 0) {
-            bardAnswer.maplink = true;
-        }
-        if (filteredLinks.length > 0) {
-            bardAnswer.otherlink = true;
-        }
-    
-        return bardAnswer;
     }
     
     private extractMapLink(data: any, result: string[]): void {
@@ -211,28 +206,23 @@ export class GeminiService implements IGeminiService {
     }
     private cleanRequestPayload(payload: string): string {
         let cleanedPayload = payload.trim();
-        if (cleanedPayload.startsWith('"') && cleanedPayload.endsWith('"')) {
-            cleanedPayload = cleanedPayload.slice(1, -1);
-        }
+        const regex = /^['"]|['"]$|^''|''$/g;
+        cleanedPayload = cleanedPayload.replace(regex, '');
+        cleanedPayload = cleanedPayload.replace(/^\n*/, '').trim();
     
-        // Remove the word "gemini" if it appears at the beginning
-        /*const wordToRemove = "/gemini";
-        const regex = new RegExp(`^${wordToRemove}\\s*`, 'i'); 
-        cleanedPayload = cleanedPayload.replace(regex, '');*/
-    
-        return cleanedPayload.trim();
+        return cleanedPayload;
     }
     async ask(prompt: string): Promise<string> {
         const resData = await this.send(this.cleanRequestPayload(prompt));
         //console.log(JSON.stringify(resData))
         if (resData.error){
-            return resData.errormsg
+            return resData.content
         } else{
             return resData.choices[0].content;
         }
     }
 
-    /*async askStream(data: (chunk: string) => void, prompt: string): Promise<string> {
+    async askStream(data: (chunk: string) => void, prompt: string): Promise<string> {
         const resData = await this.send(this.cleanRequestPayload(prompt));
         if (!resData || !resData[3]) return "";
 
@@ -243,7 +233,7 @@ export class GeminiService implements IGeminiService {
             await this.sleep(this.random(25, 250));
         }
         return resData[3];
-    }*/
+    }
 
     async send(prompt: string): Promise<BardAnswer | any> {
         try {
