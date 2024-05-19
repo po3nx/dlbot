@@ -213,8 +213,8 @@ export class GeminiService implements IGeminiService {
         return cleanedPayload;
     }
     async ask(prompt: string): Promise<string> {
-        const resData = await this.send(this.cleanRequestPayload(prompt));
-        //console.log(JSON.stringify(resData))
+        const resData = await this.send(prompt);
+        console.log(JSON.stringify(resData))
         if (resData.error){
             return resData.content
         } else{
@@ -223,7 +223,7 @@ export class GeminiService implements IGeminiService {
     }
 
     async askStream(data: (chunk: string) => void, prompt: string): Promise<string> {
-        const resData = await this.send(this.cleanRequestPayload(prompt));
+        const resData = await this.send(prompt);
         if (!resData || !resData[3]) return "";
 
         const responseChunks = resData[3].split(" ");

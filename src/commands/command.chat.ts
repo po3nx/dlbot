@@ -29,7 +29,7 @@ export class ChatCommand extends Command {
     const formattedDate = this.formatCurrentDate();
     const chatId = ctx.chat.id.toString();
     const username = ctx.from.username as string;
-    const text = `'${replyText}'\n${ctx.message.text}`;
+    const text = replyText ? `${replyText}\n${ctx.message.text}` : ctx.message.text;
 
     let botChat = this.botChats[chatId] ?? this.initializeBotChat(chatId, username, formattedDate);
     let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
