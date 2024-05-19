@@ -6,9 +6,11 @@ import { Command } from "./command.class";
 import { OpenaiService } from "../ai/openai.service";
 import axios from "axios";
 import { ChatCompletionMessageParam } from "openai/resources";
+import { GeminiService } from "../ai/gemini.service";
 
 export class ChatCommand extends Command {
   private botChats: { [key: string]: BotChat } = {};
+  private gmnChats: { [key: string]: GeminiChat } = {};
 
   constructor(bot: Telegraf<IBotContext>, private readonly configService: IConfigService) {
     super(bot);
@@ -16,12 +18,13 @@ export class ChatCommand extends Command {
 
   public handle(): void {
     const aiService = new OpenaiService(this.configService);
+    const gemini = new GeminiService(this.configService)
 
-    this.bot.on(message('text'), ctx => this.handleText(ctx, aiService));
+    this.bot.on(message('text'), ctx => this.handleText(ctx, aiService, gemini));
     this.bot.on(message('photo'), ctx => this.handlePhoto(ctx, aiService));
   }
 
-  private async handleText(ctx: any, aiService: OpenaiService): Promise<void> {
+  private async handleText(ctx: any, aiService: OpenaiService, gemini:GeminiService): Promise<void> {
     const replyText = this.extractReplyText(ctx);
     const formattedDate = this.formatCurrentDate();
     const chatId = ctx.chat.id.toString();
@@ -29,9 +32,11 @@ export class ChatCommand extends Command {
     const text = `'${replyText}'\n${ctx.message.text}`;
 
     let botChat = this.botChats[chatId] ?? this.initializeBotChat(chatId, username, formattedDate);
+    let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
     botChat.messages.push({ role: "user", content: text });
     this.trimMessages(botChat);
-
+   
+      
     if (this.shouldGenerateImage(text)) {
       const loadingMsg = await ctx.reply('⚠️ Gambar sedang diproses, Mohon ditunggu 🌐');
       const imageUrl = await aiService.generateImage(text);
@@ -41,13 +46,23 @@ export class ChatCommand extends Command {
         ctx.replyWithPhoto(imageUrl);
         await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
       }
-    } else {
+    } else  if (this.shouldUseOpenAI(text)) {
       const response = await aiService.chatCompletion(this.prepareMessages(botChat));
       if (response) {
         botChat.messages.push({ role: "assistant", content: response });
         this.trimMessages(botChat);
         ctx.reply(response);
       }
+    } else {
+      await gemini.getAPI();
+      gemini.c = gmnChat.c
+      gemini.r = gmnChat.r
+      gemini.rc = gmnChat.rc
+      const response = await gemini.ask(text)
+      gmnChat.c = gemini.c
+      gmnChat.r = gemini.r
+      gmnChat.rc = gemini.rc
+      ctx.reply(response)
     }
   }
 
@@ -88,11 +103,19 @@ export class ChatCommand extends Command {
     this.botChats[chatId] = botChat;
     return botChat;
   }
-
+  private initializeGeminiChat(chatId: string,  date: string): GeminiChat {
+    const gmnChat: GeminiChat = { id: chatId, r:"", c:"",rc:""};
+    this.gmnChats[chatId] = gmnChat;
+    return gmnChat;
+  }
   private trimMessages(botChat: BotChat): void {
     if (botChat.messages.length > 9) {
       botChat.messages.shift();
     }
+  }
+
+  private shouldUseOpenAI(text: string): boolean {
+    return /(gpt|(chat).*\b(gpt|openai))/i.test(text);
   }
 
   private shouldGenerateImage(text: string): boolean {
@@ -127,4 +150,10 @@ interface BotChat {
   user: string;
   date: string;
   messages: ChatCompletionMessageParam[];
+}
+interface GeminiChat {
+  id: string;
+  c : string;
+  r : string;
+  rc : string;
 }

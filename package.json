@@ -24,6 +24,7 @@
     "@types/uuid": "^9.0.8",
     "@types/valid-url": "^1.0.7",
     "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
     "child_process": "^1.0.2",
     "dotenv": "^16.4.5",
     "openai": "^4.43.0",
