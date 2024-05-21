@@ -4,22 +4,32 @@ import { load } from "cheerio";
 import axios, { AxiosInstance } from "axios";
 import { AxiosConfig, GoogleData, APIResponse, IGeminiService } from "./gemini.interface";
 import { IConfigService } from "../config/config.interface";
+import fs from "fs";
+import { CookieJar, MemoryCookieStore } from 'tough-cookie';
 
 export class GeminiService implements IGeminiService {
     private axios: AxiosInstance;
-    private cookies: string;
     private snlm0e?: string;
     private cfb2h?: string;
     public c?:string;
     public r?:string;
     public rc?:string;
+    private cookieJar: CookieJar;
+    private cookiesFilePath: string = "cookies.json";
 
     constructor(private readonly configService: IConfigService) {
-        this.cookies = `__Secure-1PSIDTS=${this.configService.get("__Secure_1PSIDTS")};__Secure-1PSIDCC=${this.configService.get("__Secure_1PSIDCC")};__Secure-1PSID=${this.configService.get("__Secure_1PSID")};__Secure-1PAPISID=${this.configService.get("__Secure_1PAPISID")};`
+        //const cookie = `__Secure-1PSIDTS=${this.configService.get("__Secure_1PSIDTS")};__Secure-1PSIDCC=${this.configService.get("__Secure_1PSIDCC")};__Secure-1PSID=${this.configService.get("__Secure_1PSID")};__Secure-1PAPISID=${this.configService.get("__Secure_1PAPISID")};`
+        this.cookieJar = new CookieJar(new MemoryCookieStore(), { looseMode: true });
+
+        if (!this.loadCookiesFromFile() || !this.cookieJar.getCookiesSync("https://gemini.google.com").some(cookie => cookie.key === "__Secure-1PSID")) {
+            this.setInitialCookies();
+            this.saveCookiesToFile();
+        }
+
         const agent = new https.Agent({
             rejectUnauthorized: false,
         });
-
+        
         const axiosOptions: AxiosConfig = {
             httpsAgent: agent,
             headers: {
@@ -39,6 +49,82 @@ export class GeminiService implements IGeminiService {
 
         this.axios = axios.create(axiosOptions);
     }
+    private loadCookiesFromFile(): boolean {
+        try {
+            if (fs.existsSync(this.cookiesFilePath)) {
+                const serializedCookies = fs.readFileSync(this.cookiesFilePath, "utf8");
+                this.cookieJar = CookieJar.deserializeSync(JSON.parse(serializedCookies));
+                return true;
+            }
+        } catch (err) {
+            console.error("Error loading cookies from file:", err);
+        }
+        return false;
+    }
+
+    private saveCookiesToFile(): void {
+        try {
+            const serializedCookies = this.cookieJar.serializeSync();
+            fs.writeFileSync(this.cookiesFilePath, JSON.stringify(serializedCookies), "utf8");
+        } catch (err) {
+            console.error("Error saving cookies to file:", err);
+        }
+    }
+    private setInitialCookies(): void {
+        const initialCookie = [
+            `__Secure-1PSIDTS=${this.configService.get("__Secure_1PSIDTS")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `__Secure-1PSIDCC=${this.configService.get("__Secure_1PSIDCC")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `__Secure-1PSID=${this.configService.get("__Secure_1PSID")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `__Secure-1PAPISID=${this.configService.get("__Secure_1PAPISID")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`
+        ];
+        const initialCookies = [
+            `__Secure-1PAPISID=Mrp2rLxLLbYxaXgE/ADWiCR8vhfShEsB3o; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `__Secure-1PSID=g.a000iwhNdlr7aU8PLWrXdM8Nsam3gOPE75l-nPXiHGShT2qcjthntO4t50T9M4BuX8LYi4Pz7wACgYKAfcSAQASFQHGX2MiFfUSp9ax-URsL7a6BMKBJhoVAUF8yKqdS65Es9_LPyQpzFANyjZF0076; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `__Secure-1PSIDCC=AKEyXzXnXY1s8c8jEgJU00x9m2zDENRJ4uSEHhXJHFPPsX26h6gW4e-cXaIjUvzfq9jbb4nYbH9E; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `__Secure-1PSIDTS=sidts-CjEBLwcBXDOcJwvkkKAWOzf_Rf3zDv5b5lOYMo1zvGbuEQh-Bt93AYwLrEPWepnQTLRmEAA; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
+            `_ga=GA1.1.450581574.1707521596; Domain=.gemini.google.com; Path=/; Expires=Wed, 23 Jun 2025 21:39:21 GMT`,
+            `_ga_WC57KJ50ZZ=GS1.1.1716129256.13.1.1716129257.0.0.0; Domain=.gemini.google.com; Path=/; Expires=Wed, 23 Jun 2025 21:41:57 GMT`,
+            `1P_JAR=2024-05-19-11; Domain=.google.com; Path=/; Expires=Mon, 18 Jun 2024 19:50:14 GMT; SameSite=none`,
+            `AEC=AQTF6HzEnfz37HsYuUO48j2MJv7pwA8ZqtwOyXGldpUNSWD1uK7yPKfM6fU; Domain=.google.com; Path=/; Expires=Thu, 19 Aug 2024 08:11:37 GMT; SameSite=Lax`,
+            `APISID=uFZlfyL0k-RUqbYH/AeDabsEo7ntsl6Sie; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT`,
+            `HSID=A_XWqotpKUjVVKh2z; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT; Secure; HttpOnly`,
+            `NID=514=HGfYmhjcANlqLi6C-n5TqoBja2lKKll66vbWZyFPuajlqGSCYTqINR2AOO0WNyKJ4NItES3MICY1AhqpwZFN1BCSHyrX_kUDvTnjyCmmwYl-OPyV4C-2divRIIZrQ10wajWuOB8l5DxjG9KtsjNfPrtG7n9h5aIzGsS825Rc0OEwsaAOH4QARSzOm8oKey5Wk2Z9_fGUQAm5gQ81aBCKBS13tv864cdnSG69iE40mfzzONyV5B_3vaG0lM_0KpfUXpdSvUj3Zpt0mHIuSW63SrqZ7WNnAko9cY7ACLMgOvoNaI1NYRrWlRHsB8UdnW4qhDV46TM0dKEkK3NB4pgu-dG-Bt6hImMlWikLtxmpdvkGVOiBM66zX4NOktmpkrTnZ5q4mSmaaNBlytmcnvm6J834QVHaNULjPvff6GFNps0; Domain=.google.com; Path=/; Expires=Wed, 26 May 2024 19:46:04 GMT; Secure; HttpOnly`,
+            `OGPC=19036484-1:; Domain=.google.com; Path=/; Expires=Thu, 06 Jun 2024 21:03:19 GMT`,
+            `S=billing-ui-v3=OHLkvMAcMwmRqba8FfTIAWDr82WD_UOZ:billing-ui-v3-efe=OHLkvMAcMwmRqba8FfTIAWDr82WD_UOZ; Domain=.google.com; Path=/; Secure; HttpOnly`,
+            `SAPISID=Mrp2rLxLLbYxaXgE/ADWiCR8vhfShEsB3o; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT`,
+            `SID=g.a000iwhNdlr7aU8PLWrXdM8Nsam3gOPE75l-nPXiHGShT2qcjthnc9v8v96Vc6HQVrAZa67NQQACgYKAdYSAQASFQHGX2MiO4xmys-onJ2wLv4xJBmLRBoVAUF8yKpnepkFT6t5nK4bOI1jFJGO0076; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT`,
+            `SIDCC=AKEyXzVUhtf5oqZMcJXju2WyI-arohZP0jho64WvAMQkUHBoW6iFU_ny4EKcZtEfFNc6x_1Uu3gn; Domain=.google.com; Path=/; Expires=Wed, 19 May 2025 21:41:57 GMT`,
+            `SSID=A2sX7Nlo7P3C32BWF; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT; Secure; HttpOnly`
+        ];
+
+        initialCookies.forEach(cookie => {
+            this.cookieJar.setCookieSync(cookie, "https://gemini.google.com");
+        });
+    }
+    private updateCookies(response: any): void {
+        if (response.headers["set-cookie"]) {
+            response.headers["set-cookie"].forEach((cookie: string) => {
+                this.cookieJar.setCookieSync(cookie, response.config.url);
+            });
+            this.saveCookiesToFile();
+        }
+    }
+    private removeNulls(array: any[]): any[] {
+        return array.filter(element => element !== null);
+    }
+
+    private getCuaca(parsedAnswer:any): string {
+        try {
+            const cleanedArray = this.removeNulls(parsedAnswer[4][0]);
+            console.log("cleaned",JSON.stringify(cleanedArray))
+            if (cleanedArray && cleanedArray[8] && cleanedArray[8][0]) {
+                return cleanedArray[8][0];
+            }
+        } catch (e) {
+            console.error("Error accessing nested element:", e);
+        }
+        return "Content not found";
+    }
     private parseResponse(response: string): BardAnswer | { error:boolean, content: string } {
         const answ = response.split("\n");
         const googleMapLinks: string[] = [];
@@ -56,6 +142,7 @@ export class GeminiService implements IGeminiService {
                 return { error:true, content: `Response Error: ${response}.` };
             }
             const parsed_answer = JSON.parse(resp_dict);
+            console.log("parsed ans", JSON.stringify(parsed_answer))
             this.c = parsed_answer[1][0];
             this.r = parsed_answer[1][1];
             this.rc = parsed_answer[4][0][0];
@@ -68,7 +155,7 @@ export class GeminiService implements IGeminiService {
                 textQuery: parsed_answer[2][0] ?? "",
                 choices: parsed_answer[4].map((i: any) => ({
                     id: i[0],
-                    content: i[1]
+                    content: i[1] == "http://googleusercontent.com/card_content/0"? this.getCuaca(parsed_answer) : i[1]
                 })),
                 link: []
             };
@@ -162,7 +249,7 @@ export class GeminiService implements IGeminiService {
                 }
             }
         } catch (e) {
-            throw new Error(
+             console.log(
                 `Error parsing response: make sure you are using the correct cookie, copy the value of "__Secure-1PSID" and "__Secure-1PSIDTS" cookie and set it like this: \n\nnew Bard("__Secure-1PSID=<COOKIE_VALUE>;__Secure-1PSIDTS=<COOKIE_VALUE>")\n\nAlso using a US proxy is recommended.\n\nIf this error persists, please open an issue on github.\nhttps://github.com/kuumoneko/GoogleBard-js`
             );
         }
@@ -174,14 +261,14 @@ export class GeminiService implements IGeminiService {
         try {
             const response = await this.axios.get("https://gemini.google.com", {
                 headers: {
-                    Cookie: this.cookies,
+                    Cookie: this.cookieJar.getCookieStringSync("https://gemini.google.com"),
                 },
             });
-
             const $ = load(response.data);
             let script = $("script[data-id=_gd]").html();
             if (!script) {
-                throw new Error('Script with data-id "_gd" not found');
+                console.log('Script with data-id "_gd" not found');
+                script = ''
             }
             script = script.replace("window.WIZ_global_data", "googleData");
             const context = { googleData: { cfb2h: "", SNlM0e: "" } as GoogleData };
@@ -191,17 +278,22 @@ export class GeminiService implements IGeminiService {
             const bl = context.googleData.cfb2h;
             this.snlm0e = at;
             this.cfb2h = bl;
+            if (response.headers["set-cookie"]) {
+                this.updateCookies(response);
+            }
             if (at !== undefined && bl !== undefined) {
                 return { at, bl };
             } else {
-                throw new Error(
+                console.log(
                     `Error parsing response: make sure you are using the correct cookie, copy the value of "__Secure-1PSID" and "__Secure-1PSIDTS" cookie and set it like this: \n\nnew Bard("__Secure-1PSID=<COOKIE_VALUE>;__Secure-1PSIDTS=<COOKIE_VALUE>")\n\nAlso using a US proxy is recommended.\n\nIf this error persists, please open an issue on github.\nhttps://github.com/kuumoneko/GoogleBard-js`
                 );
+                return Promise.reject()
             }
         } catch (e) {
-            throw new Error(
+            console.log(
                 `Error parsing response: make sure you are using the correct cookie, copy the value of "__Secure-1PSID" and "__Secure-1PSIDTS" cookie and set it like this: \n\nnew Bard("__Secure-1PSID=<COOKIE_VALUE>;__Secure-1PSIDTS=<COOKIE_VALUE>")\n\nAlso using a US proxy is recommended.\n\nIf this error persists, please open an issue on github.\nhttps://github.com/kuumoneko/GoogleBard-js`
             );
+            return Promise.reject()
         }
     }
     private cleanRequestPayload(payload: string): string {
@@ -214,7 +306,7 @@ export class GeminiService implements IGeminiService {
     }
     async ask(prompt: string): Promise<string> {
         const resData = await this.send(prompt);
-        console.log(JSON.stringify(resData))
+        //console.log(JSON.stringify(resData))
         if (resData.error){
             return resData.content
         } else{
@@ -247,7 +339,7 @@ export class GeminiService implements IGeminiService {
                 }),
                 {
                     headers: {
-                        Cookie: this.cookies,
+                        Cookie: this.cookieJar.getCookieStringSync("https://gemini.google.com"),
                     },
                     params: {
                         bl: this.cfb2h!,
@@ -257,10 +349,14 @@ export class GeminiService implements IGeminiService {
                 }
             );
             //console.log(response.data)
+            if (response.headers["set-cookie"]) {
+                this.updateCookies(response);
+            }
             return this.parseResponse(response.data);
+            
         } catch (e:any) {
             console.log(e.message);
-            throw new Error(`Error sending request: ${e.message}`);
+            console.log(`Error sending request: ${e.message}`);
         }
     }
 

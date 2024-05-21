@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.10",
+    "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "eslint": "^8.33.0",
@@ -30,6 +31,7 @@
     "openai": "^4.43.0",
     "telegraf": "^4.16.3",
     "telegraf-session-local": "^2.1.1",
+    "tough-cookie": "^4.1.4",
     "uuid": "^9.0.1",
     "valid-url": "^1.0.9"
   }

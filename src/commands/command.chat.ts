@@ -46,14 +46,7 @@ export class ChatCommand extends Command {
         ctx.replyWithPhoto(imageUrl);
         await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
       }
-    } else  if (this.shouldUseOpenAI(text)) {
-      const response = await aiService.chatCompletion(this.prepareMessages(botChat));
-      if (response) {
-        botChat.messages.push({ role: "assistant", content: response });
-        this.trimMessages(botChat);
-        ctx.reply(response);
-      }
-    } else {
+    } else  if (this.shouldUseGemini(text)) {
       await gemini.getAPI();
       gemini.c = gmnChat.c
       gemini.r = gmnChat.r
@@ -63,6 +56,13 @@ export class ChatCommand extends Command {
       gmnChat.r = gemini.r
       gmnChat.rc = gemini.rc
       ctx.reply(response)
+    } else {
+      const response = await aiService.chatCompletion(this.prepareMessages(botChat));
+      if (response) {
+        botChat.messages.push({ role: "assistant", content: response });
+        this.trimMessages(botChat);
+        ctx.reply(response);
+      }
     }
   }
 
@@ -114,8 +114,8 @@ export class ChatCommand extends Command {
     }
   }
 
-  private shouldUseOpenAI(text: string): boolean {
-    return /(gpt|(chat).*\b(gpt|openai))/i.test(text);
+  private shouldUseGemini(text: string): boolean {
+    return /(gemini|(google).*\b(bard|gemini))/i.test(text);
   }
 
   private shouldGenerateImage(text: string): boolean {
