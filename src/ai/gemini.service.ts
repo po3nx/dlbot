@@ -77,25 +77,6 @@ export class GeminiService implements IGeminiService {
             `__Secure-1PSID=${this.configService.get("__Secure_1PSID")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
             `__Secure-1PAPISID=${this.configService.get("__Secure_1PAPISID")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`
         ];
-        const initialCookies = [
-            `__Secure-1PAPISID=Mrp2rLxLLbYxaXgE/ADWiCR8vhfShEsB3o; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
-            `__Secure-1PSID=g.a000iwhNdlr7aU8PLWrXdM8Nsam3gOPE75l-nPXiHGShT2qcjthntO4t50T9M4BuX8LYi4Pz7wACgYKAfcSAQASFQHGX2MiFfUSp9ax-URsL7a6BMKBJhoVAUF8yKqdS65Es9_LPyQpzFANyjZF0076; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
-            `__Secure-1PSIDCC=AKEyXzXnXY1s8c8jEgJU00x9m2zDENRJ4uSEHhXJHFPPsX26h6gW4e-cXaIjUvzfq9jbb4nYbH9E; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
-            `__Secure-1PSIDTS=sidts-CjEBLwcBXDOcJwvkkKAWOzf_Rf3zDv5b5lOYMo1zvGbuEQh-Bt93AYwLrEPWepnQTLRmEAA; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
-            `_ga=GA1.1.450581574.1707521596; Domain=.gemini.google.com; Path=/; Expires=Wed, 23 Jun 2025 21:39:21 GMT`,
-            `_ga_WC57KJ50ZZ=GS1.1.1716129256.13.1.1716129257.0.0.0; Domain=.gemini.google.com; Path=/; Expires=Wed, 23 Jun 2025 21:41:57 GMT`,
-            `1P_JAR=2024-05-19-11; Domain=.google.com; Path=/; Expires=Mon, 18 Jun 2024 19:50:14 GMT; SameSite=none`,
-            `AEC=AQTF6HzEnfz37HsYuUO48j2MJv7pwA8ZqtwOyXGldpUNSWD1uK7yPKfM6fU; Domain=.google.com; Path=/; Expires=Thu, 19 Aug 2024 08:11:37 GMT; SameSite=Lax`,
-            `APISID=uFZlfyL0k-RUqbYH/AeDabsEo7ntsl6Sie; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT`,
-            `HSID=A_XWqotpKUjVVKh2z; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT; Secure; HttpOnly`,
-            `NID=514=HGfYmhjcANlqLi6C-n5TqoBja2lKKll66vbWZyFPuajlqGSCYTqINR2AOO0WNyKJ4NItES3MICY1AhqpwZFN1BCSHyrX_kUDvTnjyCmmwYl-OPyV4C-2divRIIZrQ10wajWuOB8l5DxjG9KtsjNfPrtG7n9h5aIzGsS825Rc0OEwsaAOH4QARSzOm8oKey5Wk2Z9_fGUQAm5gQ81aBCKBS13tv864cdnSG69iE40mfzzONyV5B_3vaG0lM_0KpfUXpdSvUj3Zpt0mHIuSW63SrqZ7WNnAko9cY7ACLMgOvoNaI1NYRrWlRHsB8UdnW4qhDV46TM0dKEkK3NB4pgu-dG-Bt6hImMlWikLtxmpdvkGVOiBM66zX4NOktmpkrTnZ5q4mSmaaNBlytmcnvm6J834QVHaNULjPvff6GFNps0; Domain=.google.com; Path=/; Expires=Wed, 26 May 2024 19:46:04 GMT; Secure; HttpOnly`,
-            `OGPC=19036484-1:; Domain=.google.com; Path=/; Expires=Thu, 06 Jun 2024 21:03:19 GMT`,
-            `S=billing-ui-v3=OHLkvMAcMwmRqba8FfTIAWDr82WD_UOZ:billing-ui-v3-efe=OHLkvMAcMwmRqba8FfTIAWDr82WD_UOZ; Domain=.google.com; Path=/; Secure; HttpOnly`,
-            `SAPISID=Mrp2rLxLLbYxaXgE/ADWiCR8vhfShEsB3o; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT`,
-            `SID=g.a000iwhNdlr7aU8PLWrXdM8Nsam3gOPE75l-nPXiHGShT2qcjthnc9v8v96Vc6HQVrAZa67NQQACgYKAdYSAQASFQHGX2MiO4xmys-onJ2wLv4xJBmLRBoVAUF8yKpnepkFT6t5nK4bOI1jFJGO0076; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT`,
-            `SIDCC=AKEyXzVUhtf5oqZMcJXju2WyI-arohZP0jho64WvAMQkUHBoW6iFU_ny4EKcZtEfFNc6x_1Uu3gn; Domain=.google.com; Path=/; Expires=Wed, 19 May 2025 21:41:57 GMT`,
-            `SSID=A2sX7Nlo7P3C32BWF; Domain=.google.com; Path=/; Expires=Sat, 29 May 2025 09:43:40 GMT; Secure; HttpOnly`
-        ];
 
         initialCookies.forEach(cookie => {
             this.cookieJar.setCookieSync(cookie, "https://gemini.google.com");
