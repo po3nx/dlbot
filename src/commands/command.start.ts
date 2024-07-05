@@ -23,7 +23,7 @@ export class StartCommand extends Command {
       ctx.editMessageText("Untuk mendownload video/audio, gunakan perintah berikut:\n\n /dl <spasi> link \n\ncontoh: \n\n/dl https://www.facebook.com/share/r/uTWmym5nx9FcYWnk/?mibextid=0VwfS7");
     });
 
-    this.bot.action("is_dislike", (ctx) => {
+    this.bot.action("is_no", (ctx) => {
       ctx.session.isYes = false;
       ctx.editMessageText("Baiklah, sepertinya anda sudah tahu perintahnya, Happy Download!");
     });
