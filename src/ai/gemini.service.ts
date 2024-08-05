@@ -71,7 +71,7 @@ export class GeminiService implements IGeminiService {
         }
     }
     private setInitialCookies(): void {
-        const initialCookie = [
+        const initialCookies = [
             `__Secure-1PSIDTS=${this.configService.get("__Secure_1PSIDTS")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
             `__Secure-1PSIDCC=${this.configService.get("__Secure_1PSIDCC")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
             `__Secure-1PSID=${this.configService.get("__Secure_1PSID")}; Domain=.google.com; Path=/; Secure; HttpOnly; SameSite=none`,
