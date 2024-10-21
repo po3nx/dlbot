@@ -29,11 +29,11 @@ export class ChatCommand extends Command {
     const formattedDate = this.formatCurrentDate();
     const chatId = ctx.chat.id.toString();
     const username = ctx.from.username as string;
-    const text = replyText ? `${replyText}\n${ctx.message.text}` : ctx.message.text;
+    const text = replyText ? `${ctx.message.text}\nQuoted Message:'${replyText}'` : ctx.message.text;
 
     let botChat = this.botChats[chatId] ?? this.initializeBotChat(chatId, username, formattedDate);
     let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
-    botChat.messages.push({ role: "user", content: text });
+    botChat.messages.push({ role: "user", content: `${username} ( ${formattedDate} ): ${text}` });
     this.trimMessages(botChat);
    
       
@@ -125,7 +125,7 @@ export class ChatCommand extends Command {
   private prepareMessages(botChat: BotChat): ChatCompletionMessageParam[] {
     const initialMessages: ChatCompletionMessageParam[] = [{
       role: "system",
-      content: "Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. Jawablah pertanyaan dengan sesingkat mungkin."
+      content: "Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. anda berada di dalam sebuah group telegram ataupun private chat, nama dan waktu chat terdapat di awal setiap kalimat dari user, anda tidak perlu menyebut nama anda atau menggunakan format chat nama nomor dan tanggal pada saat membalas chat, langsung saja ke kalimat balasan,  Jawablah pertanyaan dengan sesingkat mungkin."
     }];
     return [...initialMessages, ...botChat.messages];
   }
