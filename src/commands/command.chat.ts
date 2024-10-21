@@ -29,11 +29,13 @@ export class ChatCommand extends Command {
     const formattedDate = this.formatCurrentDate();
     const chatId = ctx.chat.id.toString();
     const username = ctx.from.username as string;
+    const firstName = ctx.from.first_name || ""; 
+    const lastName = ctx.from.last_name || "";
     const text = replyText ? `${ctx.message.text}\nQuoted Message:'${replyText}'` : ctx.message.text;
 
     let botChat = this.botChats[chatId] ?? this.initializeBotChat(chatId, username, formattedDate);
     let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
-    botChat.messages.push({ role: "user", content: `${username} ( ${formattedDate} ): ${text}` });
+    botChat.messages.push({ role: "user", content: `${firstName} ${lastName} (@${username}) ${formattedDate}: ${text}` });
     this.trimMessages(botChat);
    console.log(botChat)
       

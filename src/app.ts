@@ -28,8 +28,15 @@ class Bot {
     }
     this.bot.launch();
   }
+
+  async stop(sig:string){
+    this.bot.stop(sig)
+  }
 }
 
 const config = new ConfigService();
 const bot = new Bot(config);
 bot.init();
+
+process.once('SIGINT', () => bot.stop('SIGINT'))
+process.once('SIGTERM', () => bot.stop('SIGTERM'))
