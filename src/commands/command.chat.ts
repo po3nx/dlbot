@@ -35,7 +35,7 @@ export class ChatCommand extends Command {
     let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
     botChat.messages.push({ role: "user", content: `${username} ( ${formattedDate} ): ${text}` });
     this.trimMessages(botChat);
-   
+   console.log(botChat)
       
     if (this.shouldGenerateImage(text)) {
       const loadingMsg = await ctx.reply('⚠️ Gambar sedang diproses, Mohon ditunggu 🌐');
