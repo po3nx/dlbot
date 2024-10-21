@@ -32,10 +32,11 @@ export class ChatCommand extends Command {
     const firstName = ctx.from.first_name || ""; 
     const lastName = ctx.from.last_name || "";
     const text = replyText ? `${ctx.message.text}\nQuoted Message:'${replyText}'` : ctx.message.text;
+    const jam = this.getCurrentDateTime();
 
     let botChat = this.botChats[chatId] ?? this.initializeBotChat(chatId, username, formattedDate);
     let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
-    botChat.messages.push({ role: "user", content: `${firstName} ${lastName} (@${username}) ${formattedDate}: ${text}` });
+    botChat.messages.push({ role: "user", content: `${firstName} ${lastName} (@${username}) ${jam}: ${text}` });
     this.trimMessages(botChat);
       
     if (this.shouldGenerateImage(text)) {
@@ -143,6 +144,33 @@ export class ChatCommand extends Command {
       console.error("Failed to download or process image:", error);
       return null;
     }
+  }
+  private getCurrentDateTime() {
+    const now = new Date();
+
+    // Get the UTC time
+    const utcYear = now.getUTCFullYear();
+    const utcMonth = now.getUTCMonth();
+    const utcDate = now.getUTCDate();
+    const utcHours = now.getUTCHours();
+    const utcMinutes = now.getUTCMinutes();
+    const utcSeconds = now.getUTCSeconds();
+
+    // Define the GMT+8 offset in hours
+    const offsetHours = 8;
+
+    // Calculate the local time in GMT+8
+    const localDate = new Date(Date.UTC(utcYear, utcMonth, utcDate, utcHours + offsetHours, utcMinutes, utcSeconds));
+
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const month = String(localDate.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+    const year = localDate.getFullYear();
+
+    const hours = String(localDate.getHours()).padStart(2, '0');
+    const minutes = String(localDate.getMinutes()).padStart(2, '0');
+    const seconds = String(localDate.getSeconds()).padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
   }
 }
 
