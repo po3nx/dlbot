@@ -146,21 +146,8 @@ export class ChatCommand extends Command {
     }
   }
   private getCurrentDateTime() {
-    const now = new Date();
 
-    // Get the UTC time
-    const utcYear = now.getUTCFullYear();
-    const utcMonth = now.getUTCMonth();
-    const utcDate = now.getUTCDate();
-    const utcHours = now.getUTCHours();
-    const utcMinutes = now.getUTCMinutes();
-    const utcSeconds = now.getUTCSeconds();
-
-    // Define the GMT+8 offset in hours
-    const offsetHours = 8;
-
-    // Calculate the local time in GMT+8
-    const localDate = new Date(Date.UTC(utcYear, utcMonth, utcDate, utcHours + offsetHours, utcMinutes, utcSeconds));
+    const localDate = new Date();
 
     const day = String(localDate.getDate()).padStart(2, '0');
     const month = String(localDate.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
