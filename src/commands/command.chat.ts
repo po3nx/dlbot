@@ -38,32 +38,33 @@ export class ChatCommand extends Command {
     let gmnChat = this.gmnChats[chatId] ?? this.initializeGeminiChat(chatId, formattedDate);
     botChat.messages.push({ role: "user", content: `${firstName} ${lastName} (@${username}) ${jam}: ${text}` });
     this.trimMessages(botChat);
-      
-    if (this.shouldGenerateImage(text)) {
-      const loadingMsg = await ctx.reply('⚠️ Gambar sedang diproses, Mohon ditunggu 🌐');
-      const imageUrl = await aiService.generateImage(text);
-      if (imageUrl) {
-        botChat.messages.push({ role: "assistant", content: "Gambar telah dibuat, sesuai deskripsi anda" });
-        this.trimMessages(botChat);
-        ctx.replyWithPhoto(imageUrl);
-        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
-      }
-    } else  if (this.shouldUseGemini(text)) {
-      await gemini.getAPI();
-      gemini.c = gmnChat.c
-      gemini.r = gmnChat.r
-      gemini.rc = gmnChat.rc
-      const response = await gemini.ask(text)
-      gmnChat.c = gemini.c
-      gmnChat.r = gemini.r
-      gmnChat.rc = gemini.rc
-      ctx.reply(response)
-    } else {
-      const response = await aiService.chatCompletion(this.prepareMessages(botChat));
-      if (response) {
-        botChat.messages.push({ role: "assistant", content: response });
-        this.trimMessages(botChat);
-        ctx.reply(response);
+    if(this.shouldAnswer(text)){
+      if (this.shouldGenerateImage(text)) {
+        const loadingMsg = await ctx.reply('⚠️ Gambar sedang diproses, Mohon ditunggu 🌐');
+        const imageUrl = await aiService.generateImage(text);
+        if (imageUrl) {
+          botChat.messages.push({ role: "assistant", content: "Gambar telah dibuat, sesuai deskripsi anda" });
+          this.trimMessages(botChat);
+          ctx.replyWithPhoto(imageUrl);
+          await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+        }
+      } else  if (this.shouldUseGemini(text)) {
+        await gemini.getAPI();
+        gemini.c = gmnChat.c
+        gemini.r = gmnChat.r
+        gemini.rc = gmnChat.rc
+        const response = await gemini.ask(text)
+        gmnChat.c = gemini.c
+        gmnChat.r = gemini.r
+        gmnChat.rc = gemini.rc
+        ctx.reply(response)
+      } else {
+        const response = await aiService.chatCompletion(this.prepareMessages(botChat));
+        if (response) {
+          botChat.messages.push({ role: "assistant", content: response });
+          this.trimMessages(botChat);
+          ctx.reply(response);
+        }
       }
     }
   }
@@ -119,7 +120,9 @@ export class ChatCommand extends Command {
   private shouldUseGemini(text: string): boolean {
     return /(gemini|(google).*\b(bard|gemini))/i.test(text);
   }
-
+  private shouldAnswer(text: string): boolean {
+    return /\b(bot|bot\?|bot!|bot\.)\b|@maspungbot/i.test(text);
+  }
   private shouldGenerateImage(text: string): boolean {
     return /(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text);
   }
