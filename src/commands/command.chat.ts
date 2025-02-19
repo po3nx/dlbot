@@ -46,8 +46,11 @@ export class ChatCommand extends Command {
           botChat.messages.push({ role: "assistant", content: "Gambar telah dibuat, sesuai deskripsi anda" });
           this.trimMessages(botChat);
           ctx.replyWithPhoto(imageUrl);
-          await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+        }else{
+          botChat.messages.push({ role: "assistant", content: "Gagal Membuat Gambar" });
+          ctx.reply("Gagal Membuat Gambar");
         }
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
       } else  if (this.shouldUseGemini(text)) {
         await gemini.getAPI();
         gemini.c = gmnChat.c
