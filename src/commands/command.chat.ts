@@ -144,8 +144,8 @@ export class ChatCommand extends Command {
         }))
       };
       const resultString = JSON.stringify(result, null, 2);
+      console.log(searchResult);
       if (searchResult) {
-        console.log(resultString);
         additional = "Silakan gunakan informasi tambahan dari hasil pencarian Google ini untuk menjawab pertanyaan pengguna jika diperlukan dan relevan dengan riwayat obrolan. Jika tidak, cukup jawab berdasarkan pengetahuan Anda: '" + resultString + "'";
       }
     } catch (error) {
@@ -153,7 +153,7 @@ export class ChatCommand extends Command {
     }
     const initialMessages: ChatCompletionMessageParam[] = [{
       role: "system",
-      content: "Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. anda berada di dalam sebuah group telegram ataupun private chat, nama dan waktu chat terdapat di awal setiap kalimat dari user, anda tidak perlu menyebut nama anda atau menggunakan format chat nama nomor dan tanggal pada saat membalas chat, langsung saja ke kalimat balasan,  Jawablah pertanyaan dengan sesingkat mungkin."
+      content: "Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. anda berada di dalam sebuah group telegram ataupun private chat, nama dan waktu chat terdapat di awal setiap kalimat dari user, anda tidak perlu menyebut nama anda atau menggunakan format chat nama nomor dan tanggal pada saat membalas chat, langsung saja ke kalimat balasan,  Jawablah pertanyaan dengan sesingkat mungkin."+ additional
     }];
     return [...initialMessages, ...botChat.messages];
   }
