@@ -144,7 +144,7 @@ export class ChatCommand extends Command {
         }))
       };
       const resultString = JSON.stringify(result, null, 2);
-      console.log(searchResult);
+      //console.log(searchResult);
       if (searchResult) {
         additional = "Silakan gunakan informasi tambahan dari hasil pencarian Google ini untuk menjawab pertanyaan pengguna jika diperlukan dan relevan dengan riwayat obrolan. Jika tidak, cukup jawab berdasarkan pengetahuan Anda: '" + resultString + "'";
       }
