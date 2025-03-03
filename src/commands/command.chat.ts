@@ -62,7 +62,7 @@ export class ChatCommand extends Command {
         gmnChat.rc = gemini.rc
         ctx.reply(response)
       } else {
-        const response = await aiService.chatCompletion(this.prepareMessages(botChat));
+        const response = await aiService.chatCompletion(await this.prepareMessages(botChat,text));
         if (response) {
           botChat.messages.push({ role: "assistant", content: response });
           this.trimMessages(botChat);
@@ -130,7 +130,27 @@ export class ChatCommand extends Command {
     return /(txt2img|(make|create|buat|cari|generate|bikin).*\b(gambar|foto|desain|design|image|photo|lukisan|ilustrasi|paint|illustration))/i.test(text);
   }
 
-  private prepareMessages(botChat: BotChat): ChatCompletionMessageParam[] {
+  private async prepareMessages(botChat: BotChat,text:string): Promise<ChatCompletionMessageParam[]> {
+    let additional = "";
+    try {
+      const url = `https://www.googleapis.com/customsearch/v1?key=google_key&cx=google_cx&q=${text}`;
+      const response = await axios.get(url);
+      const searchResult = response.data.items;
+      const result = {
+        keyword: text,
+        items: searchResult.map((item: { title: string; snippet: string; }) => ({
+          title: item.title,
+          snippet: item.snippet
+        }))
+      };
+      const resultString = JSON.stringify(result, null, 2);
+      if (searchResult) {
+        console.log(resultString);
+        additional = "Silakan gunakan informasi tambahan dari hasil pencarian Google ini untuk menjawab pertanyaan pengguna jika diperlukan dan relevan dengan riwayat obrolan. Jika tidak, cukup jawab berdasarkan pengetahuan Anda: '" + resultString + "'";
+      }
+    } catch (error) {
+      console.log(error);
+    }
     const initialMessages: ChatCompletionMessageParam[] = [{
       role: "system",
       content: "Nama anda MasPung Bot, bot Telegram cerdas buatan Purwanto yang terintegrasi dengan ChatGPT buatan OpenAI. anda berada di dalam sebuah group telegram ataupun private chat, nama dan waktu chat terdapat di awal setiap kalimat dari user, anda tidak perlu menyebut nama anda atau menggunakan format chat nama nomor dan tanggal pada saat membalas chat, langsung saja ke kalimat balasan,  Jawablah pertanyaan dengan sesingkat mungkin."
