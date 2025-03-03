@@ -138,8 +138,9 @@ export class ChatCommand extends Command {
       const searchResult = response.data.items;
       const result = {
         keyword: text,
-        items: searchResult.map((item: { title: string; snippet: string; }) => ({
+        items: searchResult.map((item: { title: string; link: string, snippet: string; }) => ({
           title: item.title,
+          link: item.link,
           snippet: item.snippet
         }))
       };
