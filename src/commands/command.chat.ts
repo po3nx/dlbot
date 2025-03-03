@@ -133,7 +133,7 @@ export class ChatCommand extends Command {
   private async prepareMessages(botChat: BotChat,text:string): Promise<ChatCompletionMessageParam[]> {
     let additional = "";
     try {
-      const url = `https://www.googleapis.com/customsearch/v1?key=AIzaSyCTJDhxi5n1_yaFnsDi63g4QpYwA5XVjts&cx=b1fa41859d52749ee&q=${text}`;
+      const url = `https://www.googleapis.com/customsearch/v1?key=${this.configService.get("GOOGLE_KEY")}&cx=${this.configService.get("GOOGLE_CX")}&q=${text}`;
       const response = await axios.get(url);
       const searchResult = response.data.items;
       const result = {
