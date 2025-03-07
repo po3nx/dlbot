@@ -11,7 +11,7 @@ export class OpenaiService implements IOpenaiService {
     async chatCompletion(messages: ChatCompletionMessageParam[]): Promise<string | null> {
         try {
             const response = await this.openai.chat.completions.create({
-                model: 'gpt-4o',
+                model: 'gpt-4o-mini',
                 temperature: 0.6,
                 max_tokens: 2000,
                 messages: messages
