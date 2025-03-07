@@ -136,17 +136,17 @@ export class ChatCommand extends Command {
       const url = `https://www.googleapis.com/customsearch/v1?key=${this.configService.get("GOOGLE_KEY")}&cx=${this.configService.get("GOOGLE_CX")}&q=${text}`;
       const response = await axios.get(url);
       const searchResult = response.data.items;
-      const result = {
-        keyword: text,
-        items: searchResult.map((item: { title: string; link: string, snippet: string; }) => ({
-          title: item.title,
-          link: item.link,
-          snippet: item.snippet
-        }))
-      };
-      const resultString = JSON.stringify(result, null, 2);
       //console.log(searchResult);
       if (searchResult) {
+        const result = {
+          keyword: text,
+          items: searchResult.map((item: { title: string; link: string, snippet: string; }) => ({
+            title: item.title,
+            link: item.link,
+            snippet: item.snippet
+          }))
+        };
+        const resultString = JSON.stringify(result, null, 2);
         additional = "Silakan gunakan informasi tambahan dari hasil pencarian Google ini untuk menjawab pertanyaan pengguna jika diperlukan dan relevan dengan riwayat obrolan. Jika tidak, cukup jawab berdasarkan pengetahuan Anda: '" + resultString + "'";
       }
     } catch (error) {
