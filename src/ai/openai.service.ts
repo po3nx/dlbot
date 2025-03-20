@@ -37,7 +37,7 @@ export class OpenaiService implements IOpenaiService {
             }];
 
             const response = await this.openai.chat.completions.create({
-                model: 'gpt-4o',
+                model: 'gpt-4o-mini',
                 temperature: 0.6,
                 max_tokens: 2000,
                 messages: message
