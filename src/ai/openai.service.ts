@@ -13,7 +13,6 @@ export class OpenaiService implements IOpenaiService {
             const response = await this.openai.chat.completions.create({
                 model: 'gpt-5-nano',
                 temperature: 0.6,
-                max_tokens: 2000,
                 messages: messages
             });
 
@@ -39,7 +38,6 @@ export class OpenaiService implements IOpenaiService {
             const response = await this.openai.chat.completions.create({
                 model: 'gpt-5-nano',
                 temperature: 0.6,
-                max_tokens: 2000,
                 messages: message
             });
 
